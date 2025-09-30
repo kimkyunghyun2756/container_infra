@@ -15,6 +15,29 @@ Vagrant.configure("2") do |config|
     cfg.vm.network "forwarded_port", guest: 22, host: 60010, auto_corect: true, id: "ssh"
     cfg.vm.synced_folder "../data", "/vagrant", disabled: true
     cfg.vm.provision "shell", path: "install_pkg.sh" #add provisioning script
+    cfg.vm.provision "file", source: "ping_2_nds.sh", destination: "ping_2_nds.sh"
+    cfg.vm.provision "shell", path: "config.sh"
+  end
+
+  #=============#
+  # Added Nodes #
+  #=============#
+
+  (1..3).each do |i| # 1부터 3까지 3개의 인자를 반복해 i로 입력
+    config.vm.define "w#{i}-k8s" do |cfg| # {i} 값이 1, 2, 3으로 차례대로 치환됨
+      cfg.vm.box = "sysnet4admin/CentOS-k8s"
+      cfg.vm.provider "virtualbox" do |vb|
+        vb.name = "w#{i}-k8s(github_SysNet4Admin)" # {i} 값이 1, 2, 3으로 차례대로 치환됨
+        vb.cpus = 1
+        vb.memory = 1024
+        vb.customize ["modifyvm", :id, "--groups", "/k8s-SM(github_SysNet4Admin)"]
+      end
+      cfg.vm.host_name = "w#{i}-k8s"
+      cfg.vm.network "private_network", ip: "192.168.1.10#{i}"
+      cfg.vm.network "forwarded_port", guest: 22, host: "6010#{i}", auto_corect: true, id: "ssh"
+      cfg.vm.synced_folder "../data", "/vagrant", disabled: true
+      cfg.vm.provision "shell", path: "install_pkg.sh" #add provisioning script
+    end
   end
 end
 
